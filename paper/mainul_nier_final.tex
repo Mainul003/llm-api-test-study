@@ -8,20 +8,22 @@
 %%  PLACEHOLDERS: search for [FILL] and replace with your data
 %% ============================================================
 
-\documentclass[conference]{IEEEtran}
-\IEEEoverridecommandlockouts
+\documentclass[sigconf,review,anonymous=false]{acmart}
+\settopmatter{printacmref=false}
+\renewcommand\footnotetextcopyrightpermission[1]{}
+\pagestyle{plain}
 
 %% --- packages ---
-\usepackage{cite}
+%\usepackage{cite}
 \usepackage{amsmath,amssymb,amsfonts}
 \usepackage{booktabs}
 \usepackage{graphicx}
 \graphicspath{{./}}
 \usepackage{textcomp}
-\usepackage{xcolor}
+%\usepackage{xcolor}
 %\usepackage[hidelinks,breaklinks=true,pdfusetitle]{hyperref} % re-enable for camera-ready
-\usepackage{balance}
-\usepackage[final,stretch=10,shrink=10]{microtype}
+%\usepackage{balance}
+
 \usepackage{url}
 
 \definecolor{fillcolor}{RGB}{200,50,50}
@@ -33,26 +35,15 @@
 \title{Do LLMs Generate Adequate REST API Tests?\\
 An Empirical Comparison with Developer-Written Test Suites}
 
-\author{
-  \IEEEauthorblockN{Md.\ Mainul Islam}
-  \IEEEauthorblockA{
-    \textit{WebAlive (Web Mascot Pty Ltd)} \\
-    Melbourne, Australia (Remote) \\
-    \textit{Dept.\ of CSE, United International University}\\
-    Dhaka, Bangladesh \\
-    mainulfuad95@gmail.com
-  }
-  \and
-  \IEEEauthorblockN{A.K.M.\ Muzahidul Islam}
-  \IEEEauthorblockA{
-    \textit{Dept.\ of CSE}\\
-    \textit{United International University}\\
-    Dhaka, Bangladesh \\
-    muzahid@cse.uiu.ac.bd
-  }
+\author{Md. Mainul Islam}
+\orcid{0009-0006-6368-2987}
+\affiliation{%
+  \institution{United International University / WebAlive}
+  \city{Dhaka, Bangladesh / Melbourne, Australia}
 }
+\email{mainulfuad95@gmail.com}
 
-\maketitle
+
 
 %% ============================================================
 \begin{abstract}
@@ -77,10 +68,9 @@ We discuss the complementary role of LLMs and practitioners, and release
 a replication package at \url{https://github.com/Mainul003/llm-api-test-study}.
 \end{abstract}
 
-\begin{IEEEkeywords}
-REST API testing, large language models, test generation, empirical study,
-software quality assurance, OpenAPI
-\end{IEEEkeywords}
+\keywords{REST API testing, large language models, test generation, empirical study, software quality assurance, OpenAPI}
+
+\maketitle
 
 %% ============================================================
 \section{Introduction}\label{sec:intro}
@@ -300,7 +290,7 @@ for developer-written tests~($\Delta = $ 26.4 percentage points).
 
 \begin{figure}[h]
   \centering
-  \includegraphics[width=\columnwidth]{fig1_endpoint_coverage.png}
+  \includegraphics[width=0.92\columnwidth]{fig1_endpoint_coverage.png}
   \caption{RQ1 --- Endpoint coverage (\%) per project.
            LLMs achieve a mean of 73.1\% vs.\ 46.7\% for developers (+26.4\,pp).}
   \label{fig:ec}
@@ -348,7 +338,7 @@ Developer-written tests achieve a mean DDR of 64.7\%, compared to
 
 \begin{figure}[h]
   \centering
-  \includegraphics[width=\columnwidth]{fig2_ddr.png}
+  \includegraphics[width=0.92\columnwidth]{fig2_ddr.png}
   \caption{RQ2 --- DDR by mutation type. LLMs outperform on M2--M3
            (schema awareness) but converge with developers on M4 (boundary faults).}
   \label{fig:ddr}
@@ -461,7 +451,7 @@ All data, scripts, and generated test collections are available at:
 
 
 %% ============================================================
-\balance
+%\balance
 \bibliographystyle{IEEEtran}
 \begin{thebibliography}{99}
 
@@ -527,16 +517,9 @@ M.~Papadakis, M.~Kintis, J.~Zhang, Y.~Jia, Y.~Le Traon, and M.~Harman,
 ``Mutation Testing Advances: An Analysis and Survey,''
 \textit{Adv. Comput.}, vol.~112, pp.~275--378, 2019.
 
-\bibitem{Noble2024}
-N.~S. Mathews and M.~Nagappan,
-``Design Choices Made by LLM-Based Test Generators Prevent Them from Finding
-Bugs,''
-\textit{arXiv preprint arXiv:2412.14137}, 2024.
 
-\bibitem{Martin2021}
-A.~Martin-Lopez, S.~Segura, and A.~Ruiz-Cort\'{e}s,
-``RESTest: Black-Box Constraint-Based Testing of RESTful Web APIs,''
-in \textit{Proc. ACM ISSTA}, pp.~459--471, 2021.
+
+
 
 \end{thebibliography}
 
