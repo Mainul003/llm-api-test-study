@@ -1,0 +1,213 @@
+{
+  "info": {
+    "name": "TaskManager API - Developer Written Tests",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "item": [
+    {
+      "name": "GET /tasks - smoke test",
+      "request": {
+        "method": "GET",
+        "url": {
+          "raw": "http://localhost:5001/tasks"
+        }
+      },
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "exec": [
+              "pm.test('Status 200', () => pm.response.to.have.status(200));",
+              "pm.test('Has tasks', () => pm.expect(pm.response.json().tasks).to.be.an('array'));"
+            ],
+            "type": "text/javascript"
+          }
+        }
+      ]
+    },
+    {
+      "name": "GET /tasks/1 - get task 1",
+      "request": {
+        "method": "GET",
+        "url": {
+          "raw": "http://localhost:5001/tasks/1"
+        }
+      },
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "exec": [
+              "pm.test('Status 200', () => pm.response.to.have.status(200));",
+              "pm.test('Correct id', () => pm.expect(pm.response.json().id).to.eql('1'));"
+            ],
+            "type": "text/javascript"
+          }
+        }
+      ]
+    },
+    {
+      "name": "POST /tasks - create task",
+      "request": {
+        "method": "POST",
+        "url": {
+          "raw": "http://localhost:5001/tasks"
+        },
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\"title\":\"Dev test task\"}"
+        }
+      },
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "exec": [
+              "pm.test('Created 201', () => pm.response.to.have.status(201));",
+              "pm.test('Title correct', () => pm.expect(pm.response.json().title).to.eql('Dev test task'));"
+            ],
+            "type": "text/javascript"
+          }
+        }
+      ]
+    },
+    {
+      "name": "PATCH /tasks/1 - update title",
+      "request": {
+        "method": "PATCH",
+        "url": {
+          "raw": "http://localhost:5001/tasks/1"
+        },
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\"title\":\"Updated title\"}"
+        }
+      },
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "exec": [
+              "pm.test('Status 200', () => pm.response.to.have.status(200));"
+            ],
+            "type": "text/javascript"
+          }
+        }
+      ]
+    },
+    {
+      "name": "DELETE /tasks/4 - delete task",
+      "request": {
+        "method": "DELETE",
+        "url": {
+          "raw": "http://localhost:5001/tasks/4"
+        }
+      },
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "exec": [
+              "pm.test('Status 200', () => pm.response.to.have.status(200));"
+            ],
+            "type": "text/javascript"
+          }
+        }
+      ]
+    },
+    {
+      "name": "GET /projects - list projects",
+      "request": {
+        "method": "GET",
+        "url": {
+          "raw": "http://localhost:5001/projects"
+        }
+      },
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "exec": [
+              "pm.test('Status 200', () => pm.response.to.have.status(200));",
+              "pm.test('Has projects', () => pm.expect(pm.response.json().projects).to.be.an('array'));"
+            ],
+            "type": "text/javascript"
+          }
+        }
+      ]
+    },
+    {
+      "name": "POST /users/login - login test",
+      "request": {
+        "method": "POST",
+        "url": {
+          "raw": "http://localhost:5001/users/login"
+        },
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\"username\":\"mainul\",\"password\":\"test123\"}"
+        }
+      },
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "exec": [
+              "pm.test('Status 200', () => pm.response.to.have.status(200));",
+              "pm.test('Has token', () => pm.expect(pm.response.json()).to.have.property('token'));"
+            ],
+            "type": "text/javascript"
+          }
+        }
+      ]
+    },
+    {
+      "name": "POST /users/login - wrong creds",
+      "request": {
+        "method": "POST",
+        "url": {
+          "raw": "http://localhost:5001/users/login"
+        },
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\"username\":\"mainul\",\"password\":\"wrong\"}"
+        }
+      },
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "exec": [
+              "pm.test('Status 401', () => pm.response.to.have.status(401));"
+            ],
+            "type": "text/javascript"
+          }
+        }
+      ]
+    }
+  ]
+}

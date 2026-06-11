@@ -1,0 +1,132 @@
+{
+  "info": {
+    "name": "UserVault API - Developer Written Tests",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "item": [
+    {
+      "name": "GET /users - list users",
+      "request": {
+        "method": "GET",
+        "url": {
+          "raw": "http://localhost:5003/users"
+        }
+      },
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "exec": [
+              "pm.test('Status 200', () => pm.response.to.have.status(200));",
+              "pm.test('Has users', () => pm.expect(pm.response.json()).to.have.property('users'));"
+            ],
+            "type": "text/javascript"
+          }
+        }
+      ]
+    },
+    {
+      "name": "GET /users/1 - get user",
+      "request": {
+        "method": "GET",
+        "url": {
+          "raw": "http://localhost:5003/users/1"
+        }
+      },
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "exec": [
+              "pm.test('Status 200', () => pm.response.to.have.status(200));",
+              "pm.test('Username is mainul', () => pm.expect(pm.response.json().username).to.eql('mainul'));"
+            ],
+            "type": "text/javascript"
+          }
+        }
+      ]
+    },
+    {
+      "name": "POST /auth/register - register user",
+      "request": {
+        "method": "POST",
+        "url": {
+          "raw": "http://localhost:5003/auth/register"
+        },
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\"username\":\"devtestuser\",\"email\":\"devtest@test.com\",\"password\":\"devpass123\"}"
+        }
+      },
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "exec": [
+              "pm.test('Status 201', () => pm.response.to.have.status(201));",
+              "pm.test('User created', () => pm.expect(pm.response.json()).to.have.property('user'));"
+            ],
+            "type": "text/javascript"
+          }
+        }
+      ]
+    },
+    {
+      "name": "POST /auth/login - login",
+      "request": {
+        "method": "POST",
+        "url": {
+          "raw": "http://localhost:5003/auth/login"
+        },
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\"username\":\"mainul\",\"password\":\"anything\"}"
+        }
+      },
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "exec": [
+              "pm.test('Status 200', () => pm.response.to.have.status(200));",
+              "pm.test('Token present', () => pm.expect(pm.response.json()).to.have.property('token'));"
+            ],
+            "type": "text/javascript"
+          }
+        }
+      ]
+    },
+    {
+      "name": "DELETE /users/2 - delete user",
+      "request": {
+        "method": "DELETE",
+        "url": {
+          "raw": "http://localhost:5003/users/2"
+        }
+      },
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "exec": [
+              "pm.test('Status 200', () => pm.response.to.have.status(200));"
+            ],
+            "type": "text/javascript"
+          }
+        }
+      ]
+    }
+  ]
+}

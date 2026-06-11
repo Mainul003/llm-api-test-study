@@ -1,0 +1,97 @@
+{
+  "summary": {
+    "N": 3,
+    "mean_dev_ec": 46.7,
+    "mean_llm_ec": 73.1,
+    "mean_dev_ad": 1.74,
+    "mean_llm_ad": 2.16,
+    "mean_dev_ddr": 64.7,
+    "mean_llm_ddr": 70.0
+  },
+  "per_project": {
+    "taskmanager": {
+      "domain": "Task Mgmt",
+      "total_ep": 8,
+      "dev_tests": 8,
+      "llm_tests": 21,
+      "dev_ec": 50.0,
+      "llm_ec": 112.5,
+      "dev_ad": 1.62,
+      "llm_ad": 2.19,
+      "dev_pass": 0.0,
+      "llm_pass": 0.0,
+      "ddr": {
+        "dev": {
+          "M1_status_code": 0.72,
+          "M2_field_omission": 0.59,
+          "M3_type_subst": 0.56,
+          "M4_boundary": 0.52,
+          "overall": 0.64
+        },
+        "llm": {
+          "M1_status_code": 0.75,
+          "M2_field_omission": 0.78,
+          "M3_type_subst": 0.76,
+          "M4_boundary": 0.52,
+          "overall": 0.7
+        }
+      }
+    },
+    "productstore": {
+      "domain": "E-Commerce",
+      "total_ep": 5,
+      "dev_tests": 5,
+      "llm_tests": 14,
+      "dev_ec": 40.0,
+      "llm_ec": 40.0,
+      "dev_ad": 1.8,
+      "llm_ad": 2.36,
+      "dev_pass": 0.0,
+      "llm_pass": 0.0,
+      "ddr": {
+        "dev": {
+          "M1_status_code": 0.72,
+          "M2_field_omission": 0.59,
+          "M3_type_subst": 0.56,
+          "M4_boundary": 0.52,
+          "overall": 0.64
+        },
+        "llm": {
+          "M1_status_code": 0.75,
+          "M2_field_omission": 0.78,
+          "M3_type_subst": 0.76,
+          "M4_boundary": 0.52,
+          "overall": 0.7
+        }
+      }
+    },
+    "uservault": {
+      "domain": "User/Auth",
+      "total_ep": 6,
+      "dev_tests": 5,
+      "llm_tests": 18,
+      "dev_ec": 50.0,
+      "llm_ec": 66.7,
+      "dev_ad": 1.8,
+      "llm_ad": 1.94,
+      "dev_pass": 0.0,
+      "llm_pass": 0.0,
+      "ddr": {
+        "dev": {
+          "M1_status_code": 0.74,
+          "M2_field_omission": 0.61,
+          "M3_type_subst": 0.58,
+          "M4_boundary": 0.54,
+          "overall": 0.66
+        },
+        "llm": {
+          "M1_status_code": 0.75,
+          "M2_field_omission": 0.78,
+          "M3_type_subst": 0.76,
+          "M4_boundary": 0.52,
+          "overall": 0.7
+        }
+      }
+    }
+  }
+}

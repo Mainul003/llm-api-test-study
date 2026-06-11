@@ -1,0 +1,393 @@
+{
+  "info": {
+    "name": "ProductStore API - LLM Generated Tests",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "item": [
+    {
+      "name": "Products",
+      "item": [
+        {
+          "name": "GET /products - list all products returns 200",
+          "request": {
+            "method": "GET",
+            "url": {
+              "raw": "http://localhost:5002/products"
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Status 200', () => pm.response.to.have.status(200));",
+                  "pm.test('Has products array', () => pm.expect(pm.response.json()).to.have.property('products'));",
+                  "pm.test('Has count', () => pm.expect(pm.response.json()).to.have.property('count'));",
+                  "pm.test('Count matches array length', () => { const b=pm.response.json(); pm.expect(b.count).to.eql(b.products.length); });"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ]
+        },
+        {
+          "name": "GET /products?category=electronics - filter by category",
+          "request": {
+            "method": "GET",
+            "url": {
+              "raw": "http://localhost:5002/products?category=electronics"
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Status 200', () => pm.response.to.have.status(200));",
+                  "pm.test('All products are electronics', () => pm.response.json().products.forEach(p => pm.expect(p.category).to.eql('electronics')));"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ]
+        },
+        {
+          "name": "GET /products?min_price=30&max_price=100 - price range filter",
+          "request": {
+            "method": "GET",
+            "url": {
+              "raw": "http://localhost:5002/products?min_price=30&max_price=100"
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Status 200', () => pm.response.to.have.status(200));",
+                  "pm.test('All products in price range', () => pm.response.json().products.forEach(p => { pm.expect(p.price).to.be.at.least(30); pm.expect(p.price).to.be.at.most(100); }));"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ]
+        },
+        {
+          "name": "GET /products/1 - get existing product",
+          "request": {
+            "method": "GET",
+            "url": {
+              "raw": "http://localhost:5002/products/1"
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Status 200', () => pm.response.to.have.status(200));",
+                  "pm.test('Product id is 1', () => pm.expect(pm.response.json().id).to.eql('1'));",
+                  "pm.test('Has price field', () => pm.expect(pm.response.json()).to.have.property('price'));",
+                  "pm.test('Price is a number', () => pm.expect(pm.response.json().price).to.be.a('number'));",
+                  "pm.test('Has stock field', () => pm.expect(pm.response.json()).to.have.property('stock'));"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ]
+        },
+        {
+          "name": "GET /products/9999 - non-existent product returns 404",
+          "request": {
+            "method": "GET",
+            "url": {
+              "raw": "http://localhost:5002/products/9999"
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Status 404', () => pm.response.to.have.status(404));",
+                  "pm.test('Error message present', () => pm.expect(pm.response.json()).to.have.property('error'));"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "Cart",
+      "item": [
+        {
+          "name": "POST /cart - create cart with valid items",
+          "request": {
+            "method": "POST",
+            "url": {
+              "raw": "http://localhost:5002/cart"
+            },
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\"items\":[{\"product_id\":\"1\",\"quantity\":2},{\"product_id\":\"2\",\"quantity\":1}]}"
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Status 201', () => pm.response.to.have.status(201));",
+                  "pm.test('Has cart id', () => pm.expect(pm.response.json()).to.have.property('id'));",
+                  "pm.test('Has total field', () => pm.expect(pm.response.json()).to.have.property('total'));",
+                  "pm.test('Total is positive number', () => pm.expect(pm.response.json().total).to.be.above(0));",
+                  "pm.test('Has items array', () => pm.expect(pm.response.json()).to.have.property('items'));",
+                  "var cartId = pm.response.json().id; pm.environment.set('cartId', cartId);"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ]
+        },
+        {
+          "name": "POST /cart - invalid product id returns 404",
+          "request": {
+            "method": "POST",
+            "url": {
+              "raw": "http://localhost:5002/cart"
+            },
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\"items\":[{\"product_id\":\"9999\",\"quantity\":1}]}"
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Status 404 for invalid product', () => pm.response.to.have.status(404));"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ]
+        },
+        {
+          "name": "POST /cart - quantity zero returns 422",
+          "request": {
+            "method": "POST",
+            "url": {
+              "raw": "http://localhost:5002/cart"
+            },
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\"items\":[{\"product_id\":\"1\",\"quantity\":0}]}"
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Status 422 for quantity 0', () => pm.response.to.have.status(422));"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ]
+        },
+        {
+          "name": "POST /cart - items not array returns 422",
+          "request": {
+            "method": "POST",
+            "url": {
+              "raw": "http://localhost:5002/cart"
+            },
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\"items\":\"not-an-array\"}"
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Status 422 for non-array items', () => pm.response.to.have.status(422));"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ]
+        },
+        {
+          "name": "GET /cart/cart_1 - get existing cart",
+          "request": {
+            "method": "GET",
+            "url": {
+              "raw": "http://localhost:5002/cart/cart_1"
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Status 200', () => pm.response.to.have.status(200));",
+                  "pm.test('Cart id matches', () => pm.expect(pm.response.json().id).to.eql('cart_1'));"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ]
+        },
+        {
+          "name": "GET /cart/nonexistent - missing cart returns 404",
+          "request": {
+            "method": "GET",
+            "url": {
+              "raw": "http://localhost:5002/cart/nonexistent"
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Status 404', () => pm.response.to.have.status(404));"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "Orders",
+      "item": [
+        {
+          "name": "POST /orders - place order with valid cart",
+          "request": {
+            "method": "POST",
+            "url": {
+              "raw": "http://localhost:5002/orders"
+            },
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\"cart_id\":\"cart_1\",\"shipping_address\":\"123 Main St, Dhaka\"}"
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Status 201', () => pm.response.to.have.status(201));",
+                  "pm.test('Has order_id', () => pm.expect(pm.response.json()).to.have.property('order_id'));",
+                  "pm.test('Status is confirmed', () => pm.expect(pm.response.json().status).to.eql('confirmed'));",
+                  "pm.test('Has shipping_address', () => pm.expect(pm.response.json()).to.have.property('shipping_address'));",
+                  "pm.test('Has total', () => pm.expect(pm.response.json()).to.have.property('total'));"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ]
+        },
+        {
+          "name": "POST /orders - missing shipping_address returns 422",
+          "request": {
+            "method": "POST",
+            "url": {
+              "raw": "http://localhost:5002/orders"
+            },
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\"cart_id\":\"cart_1\"}"
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Status 422 for missing address', () => pm.response.to.have.status(422));"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ]
+        },
+        {
+          "name": "POST /orders - invalid cart_id returns 422",
+          "request": {
+            "method": "POST",
+            "url": {
+              "raw": "http://localhost:5002/orders"
+            },
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\"cart_id\":\"nonexistent\",\"shipping_address\":\"123 Main St\"}"
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Status 422 for invalid cart', () => pm.response.to.have.status(422));"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}

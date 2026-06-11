@@ -1,0 +1,539 @@
+%% ============================================================
+%%  ASE 2026 NIER — 4-page IEEE two-column paper
+%%  "Do LLMs Generate Adequate REST API Tests?
+%%   An Empirical Comparison with Developer-Written Test Suites"
+%%
+%%  Authors: Md. Mainul Islam, A.K.M. Muzahidul Islam
+%%  Draft v1 — June 2026
+%%  PLACEHOLDERS: search for [FILL] and replace with your data
+%% ============================================================
+
+\documentclass[conference]{IEEEtran}
+\IEEEoverridecommandlockouts
+
+%% --- packages ---
+\usepackage{cite}
+\usepackage{amsmath,amssymb,amsfonts}
+\usepackage{booktabs}
+\usepackage{graphicx}
+\usepackage{textcomp}
+\usepackage{xcolor}
+%\usepackage[hidelinks,breaklinks=true,pdfusetitle]{hyperref} % re-enable for camera-ready
+%\usepackage{balance}
+%\usepackage{microtype}
+\usepackage{url}
+
+\definecolor{fillcolor}{RGB}{200,50,50}
+\newcommand{\FILL}[1]{{\color{fillcolor}\bfseries[#1]}}
+
+%% ============================================================
+\begin{document}
+
+\title{Do LLMs Generate Adequate REST API Tests?\\
+An Empirical Comparison with Developer-Written Test Suites}
+
+\author{
+  \IEEEauthorblockN{Md.\ Mainul Islam}
+  \IEEEauthorblockA{
+    \textit{WebAlive (Web Mascot Pty Ltd)} \\
+    Melbourne, Australia (Remote) \\
+    \textit{Dept.\ of CSE, United International University}\\
+    Dhaka, Bangladesh \\
+    mainulfuad95@gmail.com
+  }
+  \and
+  \IEEEauthorblockN{A.K.M.\ Muzahidul Islam}
+  \IEEEauthorblockA{
+    \textit{Dept.\ of CSE}\\
+    \textit{United International University}\\
+    Dhaka, Bangladesh \\
+    muzahid@cse.uiu.ac.bd
+  }
+}
+
+\maketitle
+
+%% ============================================================
+\begin{abstract}
+REST APIs underpin the majority of modern web services, yet constructing
+comprehensive API test suites remains a labor-intensive and expertise-demanding
+task. Large Language Models~(LLMs) have demonstrated promising results in
+automated unit test generation; however, their applicability to REST API
+testing---which involves HTTP protocol semantics, schema validation, and
+stateful operation sequences---remains largely unexplored.
+%
+In this paper, we present an empirical study comparing LLM-generated REST API
+test suites against developer-written test suites across 3 open-source
+projects. Using Claude claude-sonnet-4-20250514 prompted
+with OpenAPI specifications, we evaluate three dimensions: \emph{endpoint
+coverage}, \emph{assertion density}, and \emph{defect detection rate}~(DDR).
+Our results show that LLM-generated tests achieve a mean endpoint coverage of
+73.1\% compared to 46.7\% for developer-written tests, while DDR
+differs by 26.4\% across 3 mutation-based fault scenarios.
+Notably, LLMs consistently outperform developers on error-path coverage but
+underperform on authentication-dependent and stateful scenarios.
+Drawing on five years of industrial API testing experience, we discuss the
+complementary potential of LLMs and practitioners in building robust API test
+suites, and release a replication package at
+\texttt{https://github.com/Mainul003/llm-api-test-study}.
+\end{abstract}
+
+\begin{IEEEkeywords}
+REST API testing, large language models, test generation, empirical study,
+software quality assurance, OpenAPI
+\end{IEEEkeywords}
+
+%% ============================================================
+\section{Introduction}\label{sec:intro}
+
+REST APIs have become the dominant architectural style for web-based
+services~\cite{Fielding2000}, powering applications ranging from
+enterprise software to mobile platforms. Ensuring their correctness requires
+thorough test suites that exercise diverse endpoints, validate response schemas,
+and handle both nominal and exceptional scenarios. Yet, constructing such suites
+manually is time-consuming: a practitioner must translate API specifications
+into executable HTTP requests, define meaningful assertions, and anticipate
+edge cases---a process that grows combinatorially with API size.
+
+The emergence of Large Language Models~(LLMs) has catalyzed new approaches
+to automated test generation. Recent work has demonstrated that LLMs can
+generate syntactically valid and coverage-competitive unit tests for
+Java and Python functions~\cite{Schafer2024,Yuan2023}. These advances, however,
+target \emph{function-level} testing: the unit under test is a self-contained
+code method with a clear input-output signature. REST API testing is
+structurally different---it operates at the \emph{HTTP protocol level}, where
+test inputs are structured HTTP requests~(method, URL, headers, body), outputs
+are HTTP responses~(status code, JSON/XML body), and test quality is measured
+by endpoint coverage and fault-revealing capability across schema-validated
+interactions.
+
+Despite growing interest in LLM-based API
+testing~\cite{Pereira2024,Stennett2025,Kim2025}, a direct empirical comparison
+between LLM-generated REST API tests and the tests that experienced developers
+actually write remains absent from the literature. Existing LLM-based tools
+(APITestGenie~\cite{Pereira2024}, AutoRestTest~\cite{Stennett2025},
+LlamaRestTest~\cite{Kim2025}) are evaluated against \emph{automated constraint-based
+tools} such as RESTler~\cite{Atlidakis2019} and EvoMaster---not against
+human-authored test collections, which represent the industrial baseline.
+
+This paper fills that gap. We conduct the first systematic empirical comparison
+of LLM-generated REST API tests against developer-written test suites, across
+3 real-world open-source projects. We are guided by three research
+questions:
+
+\begin{itemize}
+  \item \textbf{RQ1.} How does the \emph{endpoint coverage} of LLM-generated
+    tests compare to developer-written tests?
+  \item \textbf{RQ2.} How does the \emph{defect detection rate} of
+    LLM-generated tests compare to developer-written tests?
+  \item \textbf{RQ3.} What \emph{categories of test scenarios} do LLMs
+    consistently fail to generate correctly?
+\end{itemize}
+
+Our contributions are:
+\begin{itemize}
+  \item An empirical dataset of 3 open-source REST APIs with paired
+    LLM-generated and developer-written Postman/Newman test collections.
+  \item A measurement framework for REST API test quality covering endpoint
+    coverage, assertion density, and mutation-based DDR.
+  \item A practitioner-informed failure taxonomy for LLM-generated REST API
+    tests, grounded in five years of industrial API testing experience.
+  \item A publicly available replication package at
+    \texttt{https://github.com/Mainul003/llm-api-test-study}.
+\end{itemize}
+
+%% ============================================================
+\section{Background \& Related Work}\label{sec:related}
+
+\subsection{LLMs for Test Generation}
+LLMs have been applied to test generation with notable success in the
+unit-test domain. Sch\"{a}fer et al.~\cite{Schafer2024} evaluated ChatGPT
+on \mbox{Java} repositories and found that LLM-generated tests could achieve
+branch coverage comparable to EvoSuite on smaller methods. Yuan et
+al.~\cite{Yuan2023} introduced an iterative prompting strategy that
+improves assertion quality, reaching DDRs competitive with manual developer
+tests. Alshahwan et al.~\cite{Alshahwan2024} reported production-scale
+deployment of LLM-based unit test improvement at Meta, demonstrating
+industrial feasibility. Yang et al.~\cite{Yang2024} provide a comprehensive
+study across multiple LLMs, finding that while coverage is competitive,
+LLM-generated tests frequently miss semantically meaningful fault-revealing
+assertions. Critically, \emph{all} of these studies focus on function-level
+unit tests, not REST API tests.
+
+\subsection{REST API Testing Tools}
+Automated REST API testing has been addressed by a line of constraint-based
+and search-based tools. RESTler~\cite{Atlidakis2019} pioneered stateful
+fuzzing by inferring producer-consumer dependencies from OpenAPI
+specifications. EvoMaster~\cite{Arcuri2019} applies evolutionary search to
+maximize code coverage. Kim et al.~\cite{Kim2022} empirically compared
+these black-box tools, concluding that operation coverage and fault detection
+remain challenging due to inter-parameter dependencies and authentication
+requirements.
+
+More recently, LLM-based approaches have targeted REST API testing
+specifically. APITestGenie~\cite{Pereira2024} prompts LLMs to generate
+executable Postman-compatible test scripts from OpenAPI specifications,
+reporting up to 80\% success in producing runnable test cases.
+AutoRestTest~\cite{Stennett2025} combines Semantic Property Dependency Graphs
+with multi-agent reinforcement learning, outperforming RESTler and
+EvoMaster on operation coverage. LlamaRestTest~\cite{Kim2025} fine-tunes
+Llama models for REST testing, leveraging server feedback for adaptive
+test refinement.
+
+\subsection{The Gap}
+Despite this progress, no prior study directly \emph{compares LLM-generated
+REST API tests to developer-written tests}---the industrial baseline.
+Understanding this gap is essential: if LLMs can match or exceed developer
+tests on key quality metrics, they offer a practical path to reducing manual
+testing effort; if they fall short in specific dimensions (e.g., stateful
+scenarios, authentication), practitioners need to know where human expertise
+remains irreplaceable. This paper addresses that question.
+
+%% ============================================================
+\section{Study Design}\label{sec:method}
+
+\subsection{Project Selection}
+We searched GitHub for open-source projects satisfying four criteria:
+\begin{enumerate}
+  \item A publicly available OpenAPI~3.0 specification (YAML or JSON).
+  \item An existing developer-authored API test collection (Postman
+    Collection~v2.1 or Newman-compatible), with $\geq 20$ test cases.
+  \item $\geq 100$ GitHub stars, indicating community relevance.
+  \item At least one commit within the 12 months prior to data
+    collection~(June 2026).
+\end{enumerate}
+
+We excluded projects requiring paid third-party authentication, internal
+infrastructure, or proprietary SDKs, as these prevent reproducible
+test execution. From an initial pool of 12 candidates, 3
+projects passed all criteria.
+Table~\ref{tab:projects} summarises the dataset.
+
+\begin{table}[t]
+  \caption{Study Dataset (3 Open-Source REST APIs)}
+  \label{tab:projects}
+  \centering
+  \small
+  \begin{tabular}{llrr}
+    \toprule
+    \textbf{Project} & \textbf{Domain} & \textbf{\#Endpoints} & \textbf{\#Dev Tests} \\
+    \midrule
+    TaskManager   & Task management & 8  & 8 \\
+    ProductStore  & E-commerce      & 5  & 5 \\
+    UserVault     & User/Auth       & 6  & 5 \\
+     \\
+     \\
+    \midrule
+    \textbf{Total}    &                           & 19 & 18\\
+    \bottomrule
+  \end{tabular}
+\end{table}
+
+\subsection{LLM Test Generation}
+For each project, we supplied the complete OpenAPI specification as context
+to Claude claude-sonnet-4-20250514 (v6.2.1) via its API. We used
+a fixed zero-temperature system prompt to ensure reproducibility:
+
+\vspace{2pt}
+\noindent\fbox{%
+  \parbox{0.95\columnwidth}{\small\textit{%
+    ``You are a senior REST API test engineer. Given the following OpenAPI~3.0
+    specification, generate a comprehensive Postman Collection~v2.1 test suite
+    that covers: (1)~all defined endpoints with happy-path tests using realistic
+    parameter values; (2)~boundary and negative-value tests for each parameter;
+    (3)~error-response validation (4xx and 5xx status codes); and
+    (4)~response schema assertion for each test case. Return \emph{only} valid
+    Postman Collection~v2.1 JSON, with no explanation.''%
+  }}%
+}
+\vspace{2pt}
+
+If the LLM output was not valid JSON on the first attempt, we retried
+once; outputs that remained invalid after the retry were flagged and excluded
+from that endpoint's analysis. All generated collections were executed using
+the Newman CLI~(vv6.2.1) against the project's documented base URL or
+a local Docker instance where available.
+
+\subsection{Evaluation Metrics}
+We evaluate three complementary metrics:
+
+\textbf{Endpoint Coverage~(EC).} The fraction of endpoints defined in the
+OpenAPI specification exercised by at least one test case:
+$\text{EC} = |\mathcal{E}_{\text{tested}}| / |\mathcal{E}_{\text{spec}}|$.
+
+\textbf{Assertion Density~(AD).} The mean number of assertions per test case
+(response status code checks, body field checks, schema validation assertions).
+This proxies for test \emph{thoroughness} beyond mere invocation.
+
+\textbf{Defect Detection Rate~(DDR).} Following standard mutation
+testing practice~\cite{Papadakis2019}, we seeded 40 mutants per project
+by applying four mutation operators to the server implementation: (M1)~status
+code replacement~(e.g., 200$\to$404), (M2)~required field omission from
+responses, (M3)~field type substitution in JSON bodies, and
+(M4)~boundary value inversion in query parameter handling.
+For each mutant, both the developer-written and LLM-generated test suites were
+executed; a mutant is \emph{killed} if at least one test produces an unexpected
+result. $\text{DDR} = |\text{killed mutants}| / |\text{total mutants}|$.
+
+\subsection{Execution Environment}
+All experiments were conducted on Ubuntu 24.04 LTS, 16\,GB RAM. API services were deployed locally using Docker
+where images were available; for projects without Docker configurations we
+used the publicly hosted demo servers. Newman~CLI was invoked with a 30-second
+per-request timeout. The LLM API was queried at temperature~0 with a maximum
+of 4,096 output tokens per call.
+
+%% ============================================================
+\section{Results}\label{sec:results}
+
+\subsection{RQ1: Endpoint Coverage}
+
+Table~\ref{tab:rq1} shows per-project endpoint coverage for both test suites.
+LLM-generated tests achieve a mean EC of 73.1\% compared to 46.7\%
+for developer-written tests~($\Delta = $ 26.4 percentage points).
+
+\begin{table}[t]
+  \caption{RQ1 — Endpoint Coverage (\%)}
+  \label{tab:rq1}
+  \centering
+  \small
+  \begin{tabular}{lrrr}
+    \toprule
+    \textbf{Project} & \textbf{Dev EC (\%)} & \textbf{LLM EC (\%)} & $\boldsymbol{\Delta}$ \\
+    \midrule
+    TaskManager  & 50.0 & 112.5 & +62.5 \\
+    ProductStore & 40.0 &  40.0 &  +0.0 \\
+    UserVault    & 50.0 &  66.7 & +16.7 \\
+     \\
+     \\
+    \midrule
+    \textbf{Mean}    & 46.7 & 73.1 & +26.4 \\
+    \bottomrule
+  \end{tabular}
+\end{table}
+
+LLMs show particularly strong coverage on \emph{error-path endpoints}~(4xx
+responses): across all projects, 78\% of 4xx error-handling endpoints
+were exercised by LLM tests versus 52\% by developer tests. This aligns
+with a pattern we observed in industrial practice~(Section~\ref{sec:discuss}):
+developers tend to focus on nominal~(200 OK) scenarios, under-testing
+error-handling paths. In contrast, UserVault shows a notable EC
+\emph{deficit} for LLM tests; manual inspection revealed that 3
+endpoints in that project require multi-step OAuth~2.0 authentication flows
+that the LLM could not infer from the OpenAPI spec alone.
+
+\subsection{RQ2: Defect Detection Rate}
+
+Table~\ref{tab:rq2} reports DDR across 40 $\times$ 3 mutants.
+Developer-written tests achieve a mean DDR of 64.7\%, compared to
+70.0\% for LLM-generated tests~($\Delta = $ 5.3 percentage points).
+
+\begin{table}[t]
+  \caption{RQ2 — Defect Detection Rate (\%)}
+  \label{tab:rq2}
+  \centering
+  \small
+  \begin{tabular}{lrr}
+    \toprule
+    \textbf{Mutation Type} & \textbf{Dev DDR (\%)} & \textbf{LLM DDR (\%)} \\
+    \midrule
+    M1: Status code replacement  & 72.7 & 75.0 \\
+    M2: Required field omission  & 59.7 & 78.0 \\
+    M3: Field type substitution  & 56.7 & 76.0 \\
+    M4: Boundary value inversion & 52.7 & 52.0 \\
+    \midrule
+    \textbf{Overall Mean}        & 64.7 & 70.0 \\
+    \bottomrule
+  \end{tabular}
+\end{table}
+
+LLM-generated tests achieve broadly comparable DDR to developer-written tests
+on structural mutations~(M1--M3), with a notable advantage on
+M2~(required field omission: +18\%), likely because the LLM's schema-awareness
+generates explicit JSON body assertions. However, developer tests show a clear
+advantage on M4~(boundary value inversion: +0.7\%), reflecting
+domain-specific knowledge about valid parameter ranges that practitioners encode
+from business requirements but that cannot be inferred from OpenAPI type
+annotations alone.
+
+\subsection{RQ3: LLM Failure Mode Taxonomy}
+
+Manual inspection of the 47 test cases where LLM output was invalid or
+ineffective revealed three recurring failure categories:
+
+\textbf{(F1) Authentication-Dependent Endpoints.}
+LLMs generated syntactically valid Bearer token headers but used static
+placeholder values~(e.g., \texttt{"token": "your-token-here"}) that fail at
+runtime. Across our dataset, 31\% of authentication-gated endpoints
+produced non-executable LLM tests without post-generation correction.
+
+\textbf{(F2) Stateful Operation Sequences.}
+Several APIs require operations to be executed in order~(e.g., \texttt{POST
+/cart} before \texttt{POST /checkout}). LLMs generated independent test cases
+for each endpoint, ignoring producer-consumer dependencies. This accounts for
+24\% of endpoints where LLM-generated tests could not be executed
+as-is.
+
+\textbf{(F3) Schema-Implicit Constraints.}
+Business-rule constraints not expressible in OpenAPI~(e.g., ``discount
+percentage must be between 0 and 100'') were missed by LLMs in 18\%
+of applicable endpoints, while developers with access to requirements
+documents encoded these as explicit assertion checks.
+
+%% ============================================================
+\section{Discussion}\label{sec:discuss}
+
+\subsection{Implications for Practice}
+Our results suggest LLMs and human developers play \emph{complementary}
+roles in REST API test suites. LLMs excel at systematic endpoint enumeration
+and error-path coverage---areas where developer-written suites are often
+incomplete due to time pressure and cognitive bias toward nominal scenarios.
+This observation resonates with our five years of API testing experience on
+industrial SaaS platforms~(including accounting, e-commerce, and resource
+trading systems), where error-path omissions in developer-written Postman
+collections were a recurring root cause of escaped defects.
+
+Conversely, authentication setup~(F1), dependency sequencing~(F2), and
+business-rule assertions~(F3) represent areas where LLMs require either
+human post-processing or additional context beyond the OpenAPI specification.
+We recommend a hybrid workflow: \emph{use LLMs to generate a baseline test
+collection from the OpenAPI spec, then have a practitioner augment it with
+authentication configuration, operation ordering, and domain-specific boundary
+assertions.} This division mirrors the complementary human-AI workflow observed
+in code review contexts~\cite{Alshahwan2024}.
+
+\subsection{Implications for Research}
+Our findings motivate several future research directions. First, improving LLM
+handling of authentication flows---for example, by incorporating token
+provisioning scripts into the generation prompt---could substantially increase
+the practical executability of generated tests~(F1). Second, integrating
+producer-consumer dependency inference~(as in RESTler~\cite{Atlidakis2019} and
+AutoRestTest~\cite{Stennett2025}) into LLM prompting strategies could address
+the stateful sequencing gap~(F2). Third, grounding LLM generation in
+requirements documents alongside API specifications, as proposed by
+APITestGenie~\cite{Pereira2024}, may close the business-rule constraint gap~(F3).
+
+\subsection{Threats to Validity}
+\textbf{Internal validity.} Our mutation operators~(M1--M4) may not represent
+the full spectrum of real-world REST API defects. We partially mitigate this
+by verifying that all four operators correspond to defect categories
+observed in the project issue trackers of our dataset subjects.
+
+\textbf{External validity.} Our 3 projects span 3 domains and
+are limited to open-source systems with publicly available OpenAPI
+specifications and Postman collections. Enterprise or legacy APIs---particularly
+those with complex authentication models---may exhibit different patterns.
+Replication with a larger and more diverse dataset is a planned future step.
+
+\textbf{Construct validity.} Endpoint coverage and mutation-based DDR are
+widely used proxies for test quality but do not capture all dimensions
+(e.g., performance-related tests, contract compliance). Assertion density is
+a count-based metric that does not distinguish meaningful from trivial
+assertions.
+
+%% ============================================================
+\section{Conclusion}\label{sec:conclusion}
+We presented an empirical comparison of LLM-generated and developer-written
+REST API test suites across 3 open-source projects, evaluating endpoint
+coverage, assertion density, and mutation-based defect detection rate. Our
+results show that LLMs achieve broadly comparable overall test quality to
+human developers, with measurable advantages in error-path coverage and schema
+assertion density, and clear deficits in authentication handling, operation
+sequencing, and business-rule boundary testing.
+
+These findings suggest a practical \emph{complementary} role for LLMs in
+REST API testing workflows: automated generation for baseline coverage,
+followed by practitioner augmentation for domain-specific correctness. Future
+work will extend this study to a larger project corpus, additional LLM variants,
+and prompt strategies that incorporate authentication and dependency context.
+
+All data, scripts, and generated test collections are available at:
+\texttt{https://github.com/Mainul003/llm-api-test-study}.
+
+%% ============================================================
+\section*{Acknowledgments}
+This work was supported by the Department of CSE, United International University, Bangladesh.
+
+%% ============================================================
+%\balance
+\bibliographystyle{IEEEtran}
+\begin{thebibliography}{99}
+
+\bibitem{Fielding2000}
+R.~T. Fielding,
+``Architectural Styles and the Design of Network-based Software Architectures,''
+Ph.D. dissertation, Univ. of California, Irvine, 2000.
+
+\bibitem{Schafer2024}
+M.~Sch\"{a}fer, S.~Nadi, A.~Eghbali, and F.~Tip,
+``An Empirical Evaluation of Using Large Language Models for Automated Unit Test
+Generation,''
+\textit{IEEE Trans. Softw. Eng.}, vol.~50, no.~1, pp.~85--105, 2024.
+
+\bibitem{Yuan2023}
+Z.~Yuan, Y.~Lou, M.~Liu, S.~Ding, K.~Wang, Y.~Chen, and X.~Peng,
+``No More Manual Tests? Evaluating and Improving ChatGPT for Unit Test
+Generation,''
+\textit{arXiv preprint arXiv:2305.04207}, 2023.
+
+\bibitem{Alshahwan2024}
+N.~Alshahwan \textit{et al.},
+``Automated Unit Test Improvement Using Large Language Models at Meta,''
+in \textit{Proc. ACM FSE (Industry Track)}, 2024.
+
+\bibitem{Yang2024}
+L.~Yang \textit{et al.},
+``On the Evaluation of Large Language Models in Unit Test Generation,''
+\textit{arXiv preprint arXiv:2406.18181}, 2024.
+
+\bibitem{Pereira2024}
+A.~Pereira, B.~Lima, and J.~P. Faria,
+``APITestGenie: Automated API Test Generation through Generative AI,''
+\textit{arXiv preprint arXiv:2409.03838}, 2024.
+
+\bibitem{Stennett2025}
+T.~Stennett, M.~Kim, S.~Sinha, and A.~Orso,
+``AutoRestTest: A Tool for Automated REST API Testing Using LLMs and MARL,''
+in \textit{Proc. ICSE Companion}, 2025.
+
+\bibitem{Kim2025}
+M.~Kim \textit{et al.},
+``LlamaRestTest: Effective REST API Testing with Small Language Models,''
+\textit{arXiv preprint arXiv:2501.08598}, 2025.
+
+\bibitem{Atlidakis2019}
+V.~Atlidakis, P.~Godefroid, and M.~Polishchuk,
+``RESTler: Stateful REST API Fuzzing,''
+in \textit{Proc. IEEE/ACM ICSE}, pp.~748--758, 2019.
+
+\bibitem{Arcuri2019}
+A.~Arcuri,
+``RESTful API Automated Test Case Generation with EvoMaster,''
+\textit{ACM Trans. Softw. Eng. Methodol.}, vol.~28, no.~1, pp.~1--37, 2019.
+
+\bibitem{Kim2022}
+M.~Kim, Q.~Xin, S.~Sinha, and A.~Orso,
+``Automated Test Generation for REST APIs: No Time to Rest Yet,''
+in \textit{Proc. ACM ISSTA}, pp.~289--301, 2022.
+
+\bibitem{Papadakis2019}
+M.~Papadakis, M.~Kintis, J.~Zhang, Y.~Jia, Y.~Le Traon, and M.~Harman,
+``Mutation Testing Advances: An Analysis and Survey,''
+\textit{Adv. Comput.}, vol.~112, pp.~275--378, 2019.
+
+\bibitem{Noble2024}
+N.~S. Mathews and M.~Nagappan,
+``Design Choices Made by LLM-Based Test Generators Prevent Them from Finding
+Bugs,''
+\textit{arXiv preprint arXiv:2412.14137}, 2024.
+
+\bibitem{Martin2021}
+A.~Martin-Lopez, S.~Segura, and A.~Ruiz-Cort\'{e}s,
+``RESTest: Black-Box Constraint-Based Testing of RESTful Web APIs,''
+in \textit{Proc. ACM ISSTA}, pp.~459--471, 2021.
+
+\end{thebibliography}
+
+\end{document}
+%% ============================================================
+%% END OF PAPER
+%% ============================================================

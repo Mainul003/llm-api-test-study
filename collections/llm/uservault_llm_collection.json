@@ -1,0 +1,520 @@
+{
+  "info": {
+    "name": "UserVault API - LLM Generated Tests",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "item": [
+    {
+      "name": "Users",
+      "item": [
+        {
+          "name": "GET /users - list active users",
+          "request": {
+            "method": "GET",
+            "url": {
+              "raw": "http://localhost:5003/users"
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Status 200', () => pm.response.to.have.status(200));",
+                  "pm.test('Has users array', () => pm.expect(pm.response.json()).to.have.property('users'));",
+                  "pm.test('All users are active', () => pm.response.json().users.forEach(u => pm.expect(u.active).to.be.true));"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ]
+        },
+        {
+          "name": "GET /users?role=admin - filter by admin role",
+          "request": {
+            "method": "GET",
+            "url": {
+              "raw": "http://localhost:5003/users?role=admin"
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Status 200', () => pm.response.to.have.status(200));",
+                  "pm.test('All users have admin role', () => pm.response.json().users.forEach(u => pm.expect(u.role).to.eql('admin')));"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ]
+        },
+        {
+          "name": "GET /users/1 - get existing user",
+          "request": {
+            "method": "GET",
+            "url": {
+              "raw": "http://localhost:5003/users/1"
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Status 200', () => pm.response.to.have.status(200));",
+                  "pm.test('User id is 1', () => pm.expect(pm.response.json().id).to.eql('1'));",
+                  "pm.test('Has username', () => pm.expect(pm.response.json()).to.have.property('username'));",
+                  "pm.test('Has email', () => pm.expect(pm.response.json()).to.have.property('email'));",
+                  "pm.test('No password in response', () => pm.expect(pm.response.json()).to.not.have.property('password'));"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ]
+        },
+        {
+          "name": "GET /users/9999 - non-existent user returns 404",
+          "request": {
+            "method": "GET",
+            "url": {
+              "raw": "http://localhost:5003/users/9999"
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Status 404', () => pm.response.to.have.status(404));",
+                  "pm.test('Error field present', () => pm.expect(pm.response.json()).to.have.property('error'));"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "Auth",
+      "item": [
+        {
+          "name": "POST /auth/register - valid registration",
+          "request": {
+            "method": "POST",
+            "url": {
+              "raw": "http://localhost:5003/auth/register"
+            },
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\"username\":\"newuser_test\",\"email\":\"newuser@test.com\",\"password\":\"securepass123\"}"
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Status 201', () => pm.response.to.have.status(201));",
+                  "pm.test('Has user in response', () => pm.expect(pm.response.json()).to.have.property('user'));",
+                  "pm.test('User has id', () => pm.expect(pm.response.json().user).to.have.property('id'));",
+                  "pm.test('Role defaults to user', () => pm.expect(pm.response.json().user.role).to.eql('user'));"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ]
+        },
+        {
+          "name": "POST /auth/register - missing email returns 422",
+          "request": {
+            "method": "POST",
+            "url": {
+              "raw": "http://localhost:5003/auth/register"
+            },
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\"username\":\"testuser2\",\"password\":\"pass12345\"}"
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Status 422 for missing email', () => pm.response.to.have.status(422));",
+                  "pm.test('Error mentions email', () => pm.expect(pm.response.json().error).to.include('email'));"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ]
+        },
+        {
+          "name": "POST /auth/register - invalid email format returns 422",
+          "request": {
+            "method": "POST",
+            "url": {
+              "raw": "http://localhost:5003/auth/register"
+            },
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\"username\":\"testuser3\",\"email\":\"notanemail\",\"password\":\"pass12345\"}"
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Status 422 for invalid email', () => pm.response.to.have.status(422));"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ]
+        },
+        {
+          "name": "POST /auth/register - short password returns 422",
+          "request": {
+            "method": "POST",
+            "url": {
+              "raw": "http://localhost:5003/auth/register"
+            },
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\"username\":\"testuser4\",\"email\":\"t4@test.com\",\"password\":\"short\"}"
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Status 422 for short password', () => pm.response.to.have.status(422));"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ]
+        },
+        {
+          "name": "POST /auth/register - duplicate username returns 409",
+          "request": {
+            "method": "POST",
+            "url": {
+              "raw": "http://localhost:5003/auth/register"
+            },
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\"username\":\"mainul\",\"email\":\"dup@test.com\",\"password\":\"pass12345\"}"
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Status 409 for duplicate username', () => pm.response.to.have.status(409));"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ]
+        },
+        {
+          "name": "POST /auth/login - valid login returns token",
+          "request": {
+            "method": "POST",
+            "url": {
+              "raw": "http://localhost:5003/auth/login"
+            },
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\"username\":\"mainul\",\"password\":\"anypass\"}"
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Status 200', () => pm.response.to.have.status(200));",
+                  "pm.test('Has token', () => pm.expect(pm.response.json()).to.have.property('token'));",
+                  "pm.test('Has user_id', () => pm.expect(pm.response.json()).to.have.property('user_id'));"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ]
+        },
+        {
+          "name": "POST /auth/login - non-existent user returns 401",
+          "request": {
+            "method": "POST",
+            "url": {
+              "raw": "http://localhost:5003/auth/login"
+            },
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\"username\":\"nosuchuser\",\"password\":\"anypass\"}"
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Status 401 for unknown user', () => pm.response.to.have.status(401));"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ]
+        },
+        {
+          "name": "POST /auth/login - deactivated user returns 403",
+          "request": {
+            "method": "POST",
+            "url": {
+              "raw": "http://localhost:5003/auth/login"
+            },
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\"username\":\"bob\",\"password\":\"anypass\"}"
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Status 403 for deactivated user', () => pm.response.to.have.status(403));"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ]
+        },
+        {
+          "name": "POST /auth/login - missing fields returns 422",
+          "request": {
+            "method": "POST",
+            "url": {
+              "raw": "http://localhost:5003/auth/login"
+            },
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\"username\":\"mainul\"}"
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Status 422 for missing password', () => pm.response.to.have.status(422));"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "User Management",
+      "item": [
+        {
+          "name": "PATCH /users/2 - update user email",
+          "request": {
+            "method": "PATCH",
+            "url": {
+              "raw": "http://localhost:5003/users/2"
+            },
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\"email\":\"alice_updated@test.com\"}"
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Status 200', () => pm.response.to.have.status(200));",
+                  "pm.test('Email updated', () => pm.expect(pm.response.json().email).to.eql('alice_updated@test.com'));"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ]
+        },
+        {
+          "name": "PATCH /users/2 - invalid email format returns 422",
+          "request": {
+            "method": "PATCH",
+            "url": {
+              "raw": "http://localhost:5003/users/2"
+            },
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\"email\":\"bademail\"}"
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Status 422 for bad email', () => pm.response.to.have.status(422));"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ]
+        },
+        {
+          "name": "PATCH /users/2 - invalid role returns 422",
+          "request": {
+            "method": "PATCH",
+            "url": {
+              "raw": "http://localhost:5003/users/2"
+            },
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\"role\":\"superadmin\"}"
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Status 422 for invalid role', () => pm.response.to.have.status(422));"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ]
+        },
+        {
+          "name": "DELETE /users/2 - deactivate user",
+          "request": {
+            "method": "DELETE",
+            "url": {
+              "raw": "http://localhost:5003/users/2"
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Status 200', () => pm.response.to.have.status(200));",
+                  "pm.test('Message field present', () => pm.expect(pm.response.json()).to.have.property('message'));",
+                  "pm.test('Correct user_id in response', () => pm.expect(pm.response.json().user_id).to.eql('2'));"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ]
+        },
+        {
+          "name": "DELETE /users/9999 - delete non-existent returns 404",
+          "request": {
+            "method": "DELETE",
+            "url": {
+              "raw": "http://localhost:5003/users/9999"
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Status 404', () => pm.response.to.have.status(404));"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}
