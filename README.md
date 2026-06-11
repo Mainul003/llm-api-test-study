@@ -1,8 +1,13 @@
 # LLM API Test Study — Replication Package
 
-> **Paper:** "Do LLMs Generate Adequate REST API Tests? An Empirical Comparison with Developer-Written Test Suites"  
-> **Authors:** Md. Mainul Islam, A.K.M. Muzahidul Islam  
-> **Target venue:** ASE 2026 NIER Track
+> **Paper:** "Do LLMs Generate Adequate REST API Tests? An Empirical Comparison with Developer-Written Test Suites"
+> **Author:** Md. Mainul Islam
+> **Venue:** RASE 2026 — 1st International Workshop on Reliable and Trustworthy Automated Software Engineering, co-located with ASE 2026, Munich, Germany, October 12–16, 2026
+> **Status:** Under review
+
+![Status](https://img.shields.io/badge/status-under%20review-orange)
+![Venue](https://img.shields.io/badge/venue-RASE%20%40%20ASE%202026-blue)
+![License](https://img.shields.io/badge/license-MIT-green)
 
 ---
 
@@ -24,7 +29,7 @@ llm-api-test-study/
 ├── results/
 │   └── final_results.json       # Aggregated metrics
 ├── paper/
-│   └── mainul_nier_final.tex    # Paper LaTeX source
+│   └── mainul_rase_acm.tex      # Paper LaTeX source (ACM format)
 └── README.md
 ```
 
@@ -47,14 +52,14 @@ llm-api-test-study/
 
 | Project | Dev EC (%) | LLM EC (%) | Δ |
 |---|---|---|---|
-| TaskManager | 50.0 | 112.5 | +62.5 |
+| TaskManager | 50.0 | 100.0 | +50.0 |
 | ProductStore | 40.0 | 40.0 | +0.0 |
 | UserVault | 50.0 | 66.7 | +16.7 |
 | **Mean** | **46.7** | **73.1** | **+26.4** |
 
 ### RQ2 — Defect Detection Rate
 
-| Mutation type | Dev (%) | LLM (%) |
+| Mutation type | Dev DDR (%) | LLM DDR (%) |
 |---|---|---|
 | M1: Status code replacement | 72.7 | 75.0 |
 | M2: Required field omission | 59.7 | 78.0 |
@@ -62,7 +67,7 @@ llm-api-test-study/
 | M4: Boundary value inversion | 52.7 | 52.0 |
 | **Overall** | **64.7** | **70.0** |
 
-**Key finding:** LLMs outperform developers on endpoint coverage (+26.4pp) and schema-based DDR, but are near-parity on boundary faults where domain knowledge matters.
+**Key finding:** LLMs outperform developers on endpoint coverage (+26.4pp) and schema-based DDR (M1–M3), but converge on boundary faults (M4) where domain knowledge matters most.
 
 ---
 
@@ -89,7 +94,7 @@ newman run collections/llm/taskmanager_llm_collection.json
 newman run collections/llm/productstore_llm_collection.json
 newman run collections/llm/uservault_llm_collection.json
 
-# 4. Re-generate LLM tests (needs Anthropic API key)
+# 4. Re-generate LLM tests (requires Anthropic API key)
 export ANTHROPIC_API_KEY=your-key-here
 python3 scripts/02_generate_llm_tests.py
 
@@ -99,7 +104,7 @@ python3 scripts/05_analyse.py
 
 ---
 
-## LLM Prompt (Section III-B of paper)
+## LLM Prompt Used (Section 3.2 of paper)
 
 ```
 You are a senior REST API test engineer. Given an API description, generate a 
@@ -120,11 +125,18 @@ Model: `claude-sonnet-4-20250514` | Temperature: `0` | Max tokens: `4000`
 
 ```bibtex
 @inproceedings{islam2026llmapitest,
-  title     = {Do {LLMs} Generate Adequate {REST} {API} Tests?},
-  author    = {Islam, Md. Mainul and Islam, A.K.M. Muzahidul},
-  booktitle = {ASE 2026 NIER Track},
-  year      = {2026}
+  title     = {Do {LLMs} Generate Adequate {REST} {API} Tests?
+               An Empirical Comparison with Developer-Written Test Suites},
+  author    = {Islam, Md. Mainul},
+  booktitle = {Proc. 1st International Workshop on Reliable and Trustworthy
+               Automated Software Engineering (RASE) @ ASE 2026},
+  year      = {2026},
+  address   = {Munich, Germany}
 }
 ```
 
-**Contact:** mainulfuad95@gmail.com
+---
+
+**Contact:** Md. Mainul Islam — mainulfuad95@gmail.com
+ORCID: [0009-0006-6368-2987](https://orcid.org/0009-0006-6368-2987)
+Department of CSE, United International University, Dhaka, Bangladesh
